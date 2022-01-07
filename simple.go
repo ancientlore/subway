@@ -6,15 +6,17 @@ import (
 	"sync"
 )
 
-// Merge returns the messages from the given channels on a single channel.
-func Merge[T any](ctx context.Context, t ...<-chan T) <-chan T {
+// Merge returns all the messages from the given input channels on a single channel.
+// The output channel is closed when all of the input channels are closed or when
+// the context is cancelled.
+func Merge[T any](ctx context.Context, input ...<-chan T) <-chan T {
 	done := ctx.Done()
-	result := make(chan T)
+	output := make(chan T)
 	go func() {
-		defer close(result)
+		defer close(output)
 		var wg sync.WaitGroup
-		wg.Add(len(t))
-		for _, c := range t {
+		wg.Add(len(input))
+		for _, c := range input {
 			go func(ch <-chan T) {
 				defer wg.Done()
 				for {
@@ -25,43 +27,55 @@ func Merge[T any](ctx context.Context, t ...<-chan T) <-chan T {
 						if !ok {
 							return
 						}
-						result <- item
+						select {
+						case output <- item:
+						case <-done:
+							return
+						}
 					}
 				}
 			}(c)
 		}
 		wg.Wait()
 	}()
-	return result
+	return output
 }
 
-// Split reads from and sends messages to any one of the to channels.
-func Split[T any](ctx context.Context, from <-chan T, to ...chan<- T) {
+// Split reads from input and sends messages to any one of the output channels.
+// The output channels are closed when the input channel is closed or when
+// the context is cancelled.
+func Split[T any](ctx context.Context, input <-chan T, output ...chan<- T) {
 	done := ctx.Done()
-	for _, c := range to {
-		go func(ch chan<- T) {
-			defer close(ch)
+	for _, c := range output {
+		go func(outCh chan<- T) {
+			defer close(outCh)
 			for {
 				select {
 				case <-done:
 					return
-				case item, ok := <-from:
+				case item, ok := <-input:
 					if !ok {
 						return
 					}
-					ch <- item
+					select {
+					case outCh <- item:
+					case <-done:
+						return
+					}
 				}
 			}
 		}(c)
 	}
 }
 
-// Copy reads from and sends messages to all of the to channels.
-func Copy[T any](ctx context.Context, from <-chan T, to ...chan<- T) {
+// Copy reads from the input channel and sends messages to all of the output channels.
+// The output channels are closed when the input channel is closed or when
+// the context is cancelled.
+func Copy[T any](ctx context.Context, input <-chan T, output ...chan<- T) {
 	done := ctx.Done()
 	go func() {
 		defer func() {
-			for _, c := range to {
+			for _, c := range output {
 				close(c)
 			}
 		}()
@@ -69,13 +83,13 @@ func Copy[T any](ctx context.Context, from <-chan T, to ...chan<- T) {
 			select {
 			case <-done:
 				return
-			case item, ok := <-from:
+			case item, ok := <-input:
 				if !ok {
 					return
 				}
-				for i := range to {
+				for i := range output {
 					select {
-					case to[i] <- item:
+					case output[i] <- item:
 					case <-done:
 						return
 					}
@@ -106,7 +120,11 @@ func Filter[T any](ctx context.Context, c <-chan T, f func(T) bool) <-chan T {
 					return
 				}
 				if f(item) {
-					res <- item
+					select {
+					case res <- item:
+					case <-done:
+						return
+					}
 				}
 			}
 		}

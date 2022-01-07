@@ -30,7 +30,11 @@ func Worker[T, R any](ctx context.Context, c <-chan T, f Func[T, R], res chan<- 
 			}
 			// Here we do the work
 			r, err := f(ctx, t)
-			res <- Result[R]{R: r, Err: err}
+			select {
+			case res <- Result[R]{R: r, Err: err}:
+			case <-done:
+				return
+			}
 		}
 	}
 }
