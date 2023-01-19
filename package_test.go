@@ -1,9 +1,10 @@
 package subway
 
 import (
-	"constraints"
 	"context"
 	"testing"
+
+	"golang.org/x/exp/constraints"
 )
 
 func generate[T constraints.Signed](ctx context.Context, count T) chan T {

@@ -1,9 +1,10 @@
 package subway
 
 import (
-	"constraints"
 	"context"
 	"sync"
+
+	"golang.org/x/exp/constraints"
 )
 
 // Merge returns all the messages from the given input channels on a single channel.
