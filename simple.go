@@ -133,27 +133,27 @@ func Filter[T any](ctx context.Context, c <-chan T, f func(T) bool) <-chan T {
 }
 
 func Less[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
-	return Filter(ctx, c, func(item T) bool { return item < value })
+	return Filter(ctx, c, func(item T) bool { return cmp.Compare(item, value) < 0 })
 }
 
 func LessOrEqual[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
-	return Filter(ctx, c, func(item T) bool { return item <= value })
+	return Filter(ctx, c, func(item T) bool { return cmp.Compare(item, value) <= 0 })
 }
 
 func Greater[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
-	return Filter(ctx, c, func(item T) bool { return item > value })
+	return Filter(ctx, c, func(item T) bool { return cmp.Compare(item, value) > 0 })
 }
 
 func GreaterOrEqual[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
-	return Filter(ctx, c, func(item T) bool { return item >= value })
+	return Filter(ctx, c, func(item T) bool { return cmp.Compare(item, value) >= 0 })
 }
 
 func Equal[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
-	return Filter(ctx, c, func(item T) bool { return item == value })
+	return Filter(ctx, c, func(item T) bool { return cmp.Compare(item, value) == 0 })
 }
 
 func NotEqual[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
-	return Filter(ctx, c, func(item T) bool { return item != value })
+	return Filter(ctx, c, func(item T) bool { return cmp.Compare(item, value) != 0 })
 }
 
 func Make[T any](ctx context.Context, f func() (T, bool)) chan T {
