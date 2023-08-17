@@ -1,10 +1,9 @@
 package subway
 
 import (
+	"cmp"
 	"context"
 	"sync"
-
-	"golang.org/x/exp/constraints"
 )
 
 // Merge returns all the messages from the given input channels on a single channel.
@@ -133,27 +132,27 @@ func Filter[T any](ctx context.Context, c <-chan T, f func(T) bool) <-chan T {
 	return res
 }
 
-func Less[T constraints.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
+func Less[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
 	return Filter(ctx, c, func(item T) bool { return item < value })
 }
 
-func LessOrEqual[T constraints.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
+func LessOrEqual[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
 	return Filter(ctx, c, func(item T) bool { return item <= value })
 }
 
-func Greater[T constraints.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
+func Greater[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
 	return Filter(ctx, c, func(item T) bool { return item > value })
 }
 
-func GreaterOrEqual[T constraints.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
+func GreaterOrEqual[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
 	return Filter(ctx, c, func(item T) bool { return item >= value })
 }
 
-func Equal[T constraints.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
+func Equal[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
 	return Filter(ctx, c, func(item T) bool { return item == value })
 }
 
-func NotEqual[T constraints.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
+func NotEqual[T cmp.Ordered](ctx context.Context, c <-chan T, value T) <-chan T {
 	return Filter(ctx, c, func(item T) bool { return item != value })
 }
 

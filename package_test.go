@@ -3,11 +3,13 @@ package subway
 import (
 	"context"
 	"testing"
-
-	"golang.org/x/exp/constraints"
 )
 
-func generate[T constraints.Signed](ctx context.Context, count T) chan T {
+type signed interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64
+}
+
+func generate[T signed](ctx context.Context, count T) chan T {
 	res := make(chan T)
 	done := ctx.Done()
 	go func() {
